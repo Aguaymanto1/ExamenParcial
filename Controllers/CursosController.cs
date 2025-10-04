@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ExamenParcial.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using ExamenParcial.Services;
 
 using ExamenParcial.Models;
 
@@ -12,11 +13,16 @@ namespace ExamenParcial.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly UltimoCursoService _ultimoCurso;
+        private readonly CursoCacheService _cursoCache;
 
-        public CursosController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public CursosController(ApplicationDbContext context, UserManager<IdentityUser> userManager, UltimoCursoService ultimoCurso, CursoCacheService cursoCache)
         {
             _context = context;
             _userManager = userManager;
+            _ultimoCurso = ultimoCurso;
+            _cursoCache = cursoCache;
+            _ultimoCurso = ultimoCurso;
         }
 
         public async Task<IActionResult> Index(string nombre, int? minCreditos, int? maxCreditos, TimeSpan? inicio, TimeSpan? fin)
@@ -71,7 +77,7 @@ namespace ExamenParcial.Controllers
                 return RedirectToAction("Detalle", new { id = cursoId });
             }
 
-           //horarios
+            //horarios
             var misMatriculas = await _context.Matriculas
                 .Include(m => m.Curso)
                 .Where(m => m.UsuarioId == user.Id && m.Estado != EstadoMatricula.Cancelada)
@@ -109,6 +115,56 @@ namespace ExamenParcial.Controllers
 
             TempData["Exito"] = "Matrícula registrada en estado Pendiente.";
             return RedirectToAction("Detalle", new { id = cursoId });
+        }
+        public async Task<IActionResult> Index(string? nombre, int? minCreditos, int? maxCreditos)
+        {
+            var cursos = await _cursoCache.GetCursosActivosAsync();
+
+            if (!string.IsNullOrEmpty(nombre))
+                cursos = cursos.Where(c => c.Nombre.Contains(nombre)).ToList();
+
+            if (minCreditos.HasValue && minCreditos.Value >= 0)
+                cursos = cursos.Where(c => c.Creditos >= minCreditos).ToList();
+
+            if (maxCreditos.HasValue && maxCreditos.Value >= 0)
+                cursos = cursos.Where(c => c.Creditos <= maxCreditos).ToList();
+
+            return View(cursos);
+        }
+
+
+
+        public async Task<IActionResult> Create(Curso curso)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Cursos.Add(curso);
+                await _context.SaveChangesAsync();
+
+                await _cursoCache.InvalidateCacheAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(curso);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(int id, Curso curso)
+        {
+            if (curso == null) return BadRequest();
+
+            if (id != curso.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                _context.Update(curso);
+                await _context.SaveChangesAsync();
+
+                await _cursoCache.InvalidateCacheAsync();
+
+                return RedirectToAction(nameof(Index));
+            }
+            return View(curso);
         }
     }
 }
