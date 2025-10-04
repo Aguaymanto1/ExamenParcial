@@ -435,3 +435,4 @@ C:\Users\j3930\Desktop\ExamenParcial\obj\Debug\net9.0\refint\ExamenParcial.dll
 C:\Users\j3930\Desktop\ExamenParcial\obj\Debug\net9.0\ExamenParcial.pdb
 C:\Users\j3930\Desktop\ExamenParcial\obj\Debug\net9.0\ExamenParcial.genruntimeconfig.cache
 C:\Users\j3930\Desktop\ExamenParcial\obj\Debug\net9.0\ref\ExamenParcial.dll
+C:\Users\j3930\Desktop\ExamenParcial\obj\Debug\net9.0\ExamenParcial.sourcelink.json
