@@ -1,0 +1,32 @@
+@model ExamenParcial.Models.Curso
+
+<h2>Matrículas del curso: @Model.Nombre</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Estudiante</th>
+            <th>Fecha Registro</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model.Matriculas)
+        {
+            <tr>
+                <td>@m.FechaRegistro.ToShortDateString()</td>
+                <td>@m.Estado</td>
+                <td>
+                    @if (m.Estado == ExamenParcial.Models.EstadoMatricula.Pendiente)
+                    {
+                        <a asp-action="ConfirmarMatricula" asp-route-id="@m.Id" class="btn btn-sm btn-success">✔ Confirmar</a>
+                        <a asp-action="CancelarMatricula" asp-route-id="@m.Id" class="btn btn-sm btn-danger">✘ Cancelar</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Volver</a>
