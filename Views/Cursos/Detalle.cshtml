@@ -1,0 +1,11 @@
+@model ExamenParcial.Models.Curso
+
+<h2>@Model.Nombre (@Model.Codigo)</h2>
+<p><strong>Créditos:</strong> @Model.Creditos</p>
+<p><strong>Horario:</strong> @Model.HorarioInicio - @Model.HorarioFin</p>
+<p><strong>Cupo Máximo:</strong> @Model.CupoMaximo</p>
+
+<form asp-action="Inscribirse" method="post">
+    <input type="hidden" name="cursoId" value="@Model.Id" />
+    <button type="submit" class="btn btn-primary">Inscribirse</button>
+</form>
