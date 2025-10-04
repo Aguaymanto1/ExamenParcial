@@ -1,0 +1,39 @@
+@model ExamenParcial.Models.Curso
+
+<h2>Editar Curso</h2>
+
+<form asp-action="Editar" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Codigo" class="form-label"></label>
+        <input asp-for="Codigo" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Creditos" class="form-label"></label>
+        <input asp-for="Creditos" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CupoMaximo" class="form-label"></label>
+        <input asp-for="CupoMaximo" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="HorarioInicio" class="form-label"></label>
+        <input asp-for="HorarioInicio" type="time" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="HorarioFin" class="form-label"></label>
+        <input asp-for="HorarioFin" type="time" class="form-control" />
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="Activo" class="form-check-input" />
+        <label asp-for="Activo" class="form-check-label">Activo</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Actualizar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
