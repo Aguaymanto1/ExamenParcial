@@ -3,11 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using ExamenParcial.Data;
 using ExamenParcial.Models;
 
-namespace PortalAcademico.Controllers
+namespace ExamenParcial.Controllers
 {
     public class CursosController : Controller
     {
         private readonly ApplicationDbContext _context;
+
         public CursosController(ApplicationDbContext context)
         {
             _context = context;
