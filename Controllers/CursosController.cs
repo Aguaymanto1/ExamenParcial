@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ExamenParcial.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+
 using ExamenParcial.Models;
 
 namespace ExamenParcial.Controllers
@@ -8,10 +11,12 @@ namespace ExamenParcial.Controllers
     public class CursosController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public CursosController(ApplicationDbContext context)
+        public CursosController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index(string nombre, int? minCreditos, int? maxCreditos, TimeSpan? inicio, TimeSpan? fin)
@@ -39,6 +44,71 @@ namespace ExamenParcial.Controllers
             var curso = await _context.Cursos.FirstOrDefaultAsync(c => c.Id == id && c.Activo);
             if (curso == null) return NotFound();
             return View(curso);
+        }
+        [HttpPost]
+        [Authorize] // Solo usuarios autenticados pueden inscribirse
+        public async Task<IActionResult> Inscribirse(int cursoId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                TempData["Error"] = "Debes iniciar sesión para inscribirte.";
+                return RedirectToAction("Detalle", new { id = cursoId });
+            }
+
+            var curso = await _context.Cursos.FirstOrDefaultAsync(c => c.Id == cursoId && c.Activo);
+            if (curso == null)
+            {
+                TempData["Error"] = "El curso no existe o no está activo.";
+                return RedirectToAction("Index");
+            }
+
+            // Validaciones
+            var inscritos = await _context.Matriculas.CountAsync(m => m.CursoId == cursoId && m.Estado != EstadoMatricula.Cancelada);
+            if (inscritos >= curso.CupoMaximo)
+            {
+                TempData["Error"] = "No hay cupos disponibles para este curso.";
+                return RedirectToAction("Detalle", new { id = cursoId });
+            }
+
+           //horarios
+            var misMatriculas = await _context.Matriculas
+                .Include(m => m.Curso)
+                .Where(m => m.UsuarioId == user.Id && m.Estado != EstadoMatricula.Cancelada)
+                .ToListAsync();
+
+            bool solapado = misMatriculas.Any(m =>
+                (curso.HorarioInicio < m.Curso.HorarioFin && curso.HorarioFin > m.Curso.HorarioInicio)
+            );
+
+            if (solapado)
+            {
+                TempData["Error"] = "Ya tienes una matrícula en un curso que se cruza en horario.";
+                return RedirectToAction("Detalle", new { id = cursoId });
+            }
+
+            //no duplicar matricula
+            bool yaMatriculado = await _context.Matriculas.AnyAsync(m => m.UsuarioId == user.Id && m.CursoId == cursoId && m.Estado != EstadoMatricula.Cancelada);
+            if (yaMatriculado)
+            {
+                TempData["Error"] = "Ya estás matriculado en este curso.";
+                return RedirectToAction("Detalle", new { id = cursoId });
+            }
+
+            // crear estado pedneite
+            var matricula = new Matricula
+            {
+                CursoId = cursoId,
+                UsuarioId = user.Id,
+                FechaRegistro = DateTime.Now,
+                Estado = EstadoMatricula.Pendiente
+            };
+
+            _context.Matriculas.Add(matricula);
+            await _context.SaveChangesAsync();
+
+            TempData["Exito"] = "Matrícula registrada en estado Pendiente.";
+            return RedirectToAction("Detalle", new { id = cursoId });
         }
     }
 }
